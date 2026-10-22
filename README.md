@@ -43,6 +43,7 @@ There are no external dependencies.
 From the folder that contains the `superstartrek` package directory:
 
 ```bash
+unzip superstartrek.zip
 javac -d out superstartrek/*.java
 java -cp out superstartrek.Run
 ```
