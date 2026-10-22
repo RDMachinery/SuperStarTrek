@@ -1,172 +1,180 @@
-# 🚀 Super Star Trek
+# Super Star Trek (Java)
 
-A text-based space strategy game written in Java, inspired by the classic 1971 mainframe game *Star Trek*. You are the captain of the USS Enterprise. Your mission: hunt down Klingon warships scattered across the galaxy before they overwhelm the Federation.
+A text-based remake in Java of the classic 1970s *Super Star Trek* computer game. You command the starship Enterprise, and your mission is to hunt down and destroy the Klingon fleet before it reaches Federation Headquarters.
 
----
-
-## 🎮 How the Game Works
-
-When the game starts, the galaxy is procedurally generated and populated with stars, Klingon warships, and Federation starbases. The Enterprise is placed at a random location, and you are told which galactic quadrant you begin in:
+Everything runs in the terminal. Navigate the galaxy by warp drive, scan for enemies, manage your energy and shields, and fight with phasers and photon torpedoes. Damaged systems can be repaired at a starbase.
 
 ```
-Your mission begins with your starship located in the
-Galactic Quadrant, 'Antares II'.
+Short Range Scan for Quadrant 3,5  (Canopus III)
++---+-------+-------+-------+---------+-------+-------+---------+--------+
+|   |   1   |   2   |   3   |    4    |   5   |   6   |    7    |   8    |
++---+-------+-------+-------+---------+-------+-------+---------+--------+
+| 1 | * x 7 | * x 5 | * x 3 | +K+ x 1 | * x 5 | * x 6 |  * x 5  | * x 5  |
+|   |       |       |       |  * x 6  |       |       |         |        |
++---+-------+-------+-------+---------+-------+-------+---------+--------+
+| 2 | * x 6 | * x 3 | * x 3 |  * x 2  | * x 6 | * x 2 |  * x 8  | * x 5  |
++---+-------+-------+-------+---------+-------+-------+---------+--------+
+| 3 | * x 5 | * x 4 | * x 6 | +C+ x 1 | * x 2 | * x 7 |  * x 6  | * x 1  |
+|   |       |       |       |  * x 2  |       |       |         |        |
++---+-------+-------+-------+---------+-------+-------+---------+--------+
+| 4 | * x 4 | * x 5 | * x 2 |  * x 4  | * x 5 | * x 3 |  * x 4  | * x 7  |
+|   |       |       |       |   <*>   |       |       |         |        |
++---+-------+-------+-------+---------+-------+-------+---------+--------+
+   ...
+   Stardate            3000.0
+   Condition           *RED*
+   Photon torpedoes    10
+   Total energy        3000
+   Shields             0
+   Klingons remaining  17
+   *** SHIELDS DANGEROUSLY LOW ***
 ```
 
-From here, the game enters a simple command loop. You issue orders, the ship and universe respond, and the game reports back in plain text. There are no timers, no animations — just you, the stars, and the Klingons.
+## Requirements
 
-The game tracks a **performance rating** (starting at 100%). Poor decisions — such as flying outside the galaxy — reduce it. The goal is to defeat the Klingons with your performance rating as high as possible.
+- Java 11 or later (JDK)
 
-If you want to quit, you can resign your commission at any time. When a session ends, the game asks if you want to play again, and whether you want the same galaxy layout or a freshly generated one.
+There are no external dependencies.
 
----
+## Building and running
 
-## ⌨️ Commands
-
-Navigation and exploration are handled through a handful of short, memorable commands. The entire game is operated from the keyboard with no menus or mouse required.
-
-| Command | What it does |
-|---------|--------------|
-| `nav`   | **Navigate** — engage warp engines. Prompts for a heading and warp factor. |
-| `srs`   | **Short Range Scan** — shows objects in the 8×8 sectors of your current quadrant. |
-| `lrs`   | **Long Range Scan** — shows Klingon, starbase, and star counts in the 3×3 quadrants surrounding you. |
-| `goto`  | **Go to position** — teleport directly to a quadrant and sector (debug/testing command). |
-| `help`  | **Help** — get information about a specific command. |
-| `xxx`   | **Resign commission** — end the game. |
-
-That's the entire control scheme. Six commands, typed in full, no abbreviations required. If you enter something unrecognised, the game lists the valid options and waits.
-
----
-
-## 🧭 Navigation — Heading and Warp
-
-The `nav` command is the heart of the game. It asks for two inputs:
-
-**1. Heading (1–9)**
-
-Heading uses a classic compass-rose number pad scheme, where the digits 1–9 map directly to directions:
-
-```
-7   8   9
- ↖  ↑  ↗
-4 ← · → 6
- ↙  ↓  ↘
-1   2   3
-
-(5 = stationary, 9 = same as 1)
-```
-
-Each integer maps to an (x, y) direction vector internally:
-
-```
-1 → ( 1,  0)   East
-2 → ( 1, -1)   North-East
-3 → ( 0, -1)   North
-4 → (-1, -1)   North-West
-5 → (-1,  0)   West
-6 → (-1,  1)   South-West
-7 → ( 0,  1)   South
-8 → ( 1,  1)   South-East
-9 → wraps back to 1
-```
-
-Fractional headings (e.g. `1.5`) interpolate between two adjacent directions, giving smooth diagonal movement between the eight compass points.
-
-**2. Warp Factor (0–8)**
-
-Warp factor controls how far the Enterprise travels. A warp factor of `1` moves the ship by one quadrant-width in the chosen direction. A warp factor of `8` sends her screaming across eight quadrant-widths in one jump. Higher warp factors consume more energy.
-
-Once both values are entered, the helm officer Sulu confirms the order and the ship moves:
-
-```
-Sulu: "Heading 3, Warp Factor 2. Aye, Sir!"
-Distance travelled: 12,288 parsecs.
-```
-
-The game then prints your new position and a local sector map automatically.
-
----
-
-## 🌌 How the Galaxy is Built
-
-### The Coordinate System
-
-The entire galaxy is represented as a flat 2D space measured in **parsecs**. Rather than storing objects on a simple grid, every object has a precise parsec coordinate `(parsecX, parsecY)`. The galaxy's total dimensions are:
-
-```
-Width:  12 × 64 × 8 = 6,144 parsecs
-Height:  4 × 64 × 8 = 2,048 parsecs
-```
-
-This continuous coordinate space is then divided into a hierarchy of two named regions:
-
-**Quadrants** — the galaxy is divided into an 8×8 grid of 64 quadrants. Each quadrant is named after a real star (Antares, Sirius, Rigel, etc.) combined with a Roman numeral (I–IV), giving names like *"Deneb III"* or *"Vega I"*. These names are for flavour; navigation works purely on numbers.
-
-**Sectors** — each quadrant is further divided into an 8×8 grid of 64 sectors, giving 4,096 sectors in total across the galaxy. Sectors are the smallest named unit of space and are used by the short-range scan.
-
-Conversion between the two representations (`parsecX/Y` ↔ `quadrantColumn/Row + sectorColumn/Row`) is handled automatically inside `GalacticPosition` whenever a position is set.
-
-### The Galaxy HashMap
-
-All game objects — stars, Klingons, starbases, and the Enterprise — live in a single `HashMap<String, GameObject>` called `galaxy`. The key for each entry is a simple string formed from the object's parsec coordinates:
-
-```
-"parsecX:parsecY"   →   GameObject
-```
-
-This means collision detection and object lookup are O(1) hash lookups. When the ship moves, its old key is removed from the map and a new key is inserted at the destination. Two objects cannot share the same parsec coordinate, which is enforced when placing objects during world generation.
-
-### World Generation
-
-At the start of each game, four placement passes populate the galaxy:
-
-| Pass | What gets placed | Count |
-|------|-----------------|-------|
-| Stars | Scattered randomly across the full galactic width and height | ~20,000 (64×64 iterations, 5 attempts each) |
-| Klingons | Placed at random unoccupied parsec positions | 8 |
-| Starbases | Placed at random unoccupied parsec positions | 3 |
-| Enterprise | Placed at a random unoccupied parsec position | 1 |
-
-The same random seed (`7276431`) is used by default each game, so the galaxy layout is reproducible. Choosing "new setup" at the play-again prompt re-seeds the generator with a random value for a fresh galaxy.
-
-### Scanning
-
-The two scan commands work by querying the galaxy HashMap:
-
-**Short Range Scan (`srs`)** iterates over all 64 sectors in the current quadrant and counts objects (Klingons `+K+`, starbases `>!<`, stars `*`, Enterprise `<*>`) in each sector cell, producing an 8×8 tactical grid.
-
-**Long Range Scan (`lrs`)** looks at the 3×3 block of quadrants centred on your current position and counts objects in each, producing a strategic overview showing how many Klingons (`K`), starbases (`B`), and stars (`S`) are in neighbouring territories. Quadrants outside the galaxy boundary are shown as `#`.
-
----
-
-## 🏗️ Code Structure
-
-| File | Purpose |
-|------|---------|
-| `Run.java` | Game loop, command parsing, world generation, I/O |
-| `GameObject.java` | Abstract base class for all entities; owns position and event listeners |
-| `GalacticPosition.java` | Coordinate system; parsec ↔ quadrant/sector conversion |
-| `Enterprise.java` | The player's ship; fires `ENTERPRISE_MOVED` events on navigation |
-| `Klingon.java` | Enemy ship entity |
-| `StarBase.java` | Federation starbase entity |
-| `Star.java` | Star entity |
-| `LongRangeScan.java` | Logic for the 3×3 quadrant strategic scan |
-| `ShortRangeScan.java` | Logic for the 8×8 sector tactical scan |
-| `GameEvent.java` | Event object passed to listeners |
-| `GameListener.java` | Interface for receiving game events |
-| `Vector.java` | 2D/3D vector maths (distance, normalisation, heading) |
-| `TextBox.java` | Text layout primitive with alignment and insets |
-| `TextBoxGrid.java` | Grid-based text formatter for scan output |
-
----
-
-## ▶️ Running the Game
-
-Compile all `.java` files in the `superstartrek` package and run the `Run` class:
+From the folder that contains the `superstartrek` package directory:
 
 ```bash
-javac superstartrek/*.java
-java superstartrek.Run
+javac -d out superstartrek/*.java
+java -cp out superstartrek.Run
 ```
 
-No external dependencies. Requires Java 8 or later.
+## Your mission
+
+At the start of each game you are told:
+
+- how many Klingon warships have invaded the galaxy (usually 15–25)
+- how many stardates you have to destroy them all
+- how many starbases are available to resupply you
+
+You **win** if you destroy every Klingon before the deadline. You **lose** in any of these cases:
+
+- the Enterprise is destroyed
+- time runs out
+- you run out of energy away from a starbase
+- you destroy the last starbase
+- you resign
+
+## The galaxy
+
+The galaxy is a grid of **8 × 8 quadrants**, and each quadrant is a grid of **8 × 8 sectors**. Coordinates are given as *column, row*, both starting at 1. The galaxy is divided into 16 named regions, such as *Antares*, *Rigel* and *Spica*. Each region is split into quadrants I–IV.
+
+| Symbol | Meaning |
+|---|---|
+| `<*>` | The Enterprise |
+| `+K+` | Klingon battle cruiser |
+| `+C+` | Klingon Commander: tougher, and can survive a torpedo |
+| `>!<` | Starbase |
+| `*` | Star |
+
+After each move the game also prints a close-up of the ship's current sector at parsec resolution. That view uses the single-letter symbols `E`, `K`, `C`, `B` and `*`.
+
+## Commands
+
+| Command | Description |
+|---|---|
+| `NAV` | Warp engine control: set a course and warp factor |
+| `SRS` | Short range scan of the current quadrant, plus ship status |
+| `LRS` | Long range scan of the surrounding 3 × 3 quadrants |
+| `PHA` | Fire phasers at all Klingons in the quadrant |
+| `TOR` | Fire a photon torpedo along a course |
+| `SHE` | Shield control: move energy between the ship and the shields |
+| `DAM` | Damage control report, and repairs when docked |
+| `COM` | Library computer |
+| `HELP` | Help for any command |
+| `XXX` | Resign your commission |
+
+### Courses
+
+Courses for `NAV` and `TOR` use this compass. Fractions are allowed, so 2.5 is half-way between 2 and 3. Course 9 is the same as course 1.
+
+```
+      4  3  2
+       \ | /
+    5 --<*>-- 1
+       / | \
+      6  7  8
+```
+
+### Warp factor
+
+- **Warp 1** moves one quadrant, which is 8 sectors. **Warp 0.125** moves one sector. The maximum is warp 8.
+- A move costs **10 energy plus 1 per sector** travelled.
+- A move takes **1 stardate**, or a fraction of one below warp 1.
+- Inside your current quadrant, the helm makes an emergency stop before hitting a Klingon, a starbase or a star.
+- Starfleet will not let you cross the edge of the galaxy.
+
+### Library computer (`COM`)
+
+| Option | Function |
+|---|---|
+| `0` | Cumulative galactic record of every quadrant you have scanned |
+| `1` | Status report: Klingons left, time remaining, starbases, damage |
+| `2` | Photon torpedo data: exact course and distance to each Klingon |
+| `3` | Starbase navigation data |
+| `4` | Direction/distance calculator, including the warp factor needed |
+| `5` | Map of galactic region names |
+
+## Combat
+
+- **Shields** absorb Klingon fire, and they start at **zero**. If a hit takes them to zero, the Enterprise is destroyed, so raise them with `SHE` before entering a fight.
+- **Phasers** split the energy you fire between every Klingon in the quadrant. Hits weaken with distance.
+- **Photon torpedoes** destroy the first Klingon or starbase whose sector they enter. A Klingon Commander may survive one. A direct hit on a star absorbs the torpedo. Use `COM 2` for an exact firing course.
+- **Klingons fire back** after you use phasers or torpedoes, and again when you warp out of their quadrant.
+- **Heavy hits can damage ship systems.** A damaged system limits what you can do; for example, damaged warp engines restrict you to warp 0.2. Systems repair slowly as you travel.
+
+## Starbases
+
+End a move next to a starbase (in any of the 8 surrounding sectors) to **dock**. Docking restores your energy and torpedoes and lowers your shields. While docked, the starbase's shields protect you from Klingon fire, and `DAM` offers to repair every damaged system for a small amount of time.
+
+Destroying a starbase costs you 25% of your performance rating. Destroying the last one ends your career.
+
+## Scoring
+
+When you win, your efficiency is calculated as:
+
+```
+efficiency = 1000 × (Klingons destroyed ÷ stardates used)²
+```
+
+The final score is your efficiency multiplied by your **performance rating**. The rating starts at 100% and drops if you give invalid navigation orders, hit the galactic perimeter or destroy starbases.
+
+## Tips
+
+1. Start with `SRS` and `LRS` to get your bearings, and use `COM 0` to plan a route.
+2. Raise shields to at least a few hundred units before entering a quadrant with Klingons.
+3. Use `COM 2` before firing torpedoes, and `COM 4` to get the exact course and warp factor to any sector.
+4. Dock regularly to refuel, rearm and repair, especially before a deadline gets close.
+5. When asked whether to play again, answering **Y** and then **N** to "Same setup" gives you a new randomly generated galaxy.
+
+## Project structure
+
+| File | Role |
+|---|---|
+| `Run.java` | Entry point, command loop and all game logic |
+| `Galaxy.java` | Object store indexed by parsec cell and by quadrant |
+| `GalacticPosition.java` | Coordinate conversions: parsecs, quadrants, sectors |
+| `Course.java` | Course/vector maths and firing solutions |
+| `GameObject.java` | Base class for anything placed in the galaxy |
+| `Enterprise.java` | The player's ship: energy, shields, torpedoes, damage |
+| `Klingon.java`, `KlingonCommander.java` | Enemy ships |
+| `Star.java`, `StarBase.java` | Stars and starbases |
+| `Device.java` | The ship systems that can be damaged |
+| `LongRangeScan.java`, `ShortRangeScan.java` | The two scanners |
+| `TextBox.java`, `TextBoxGrid.java` | Draws the bordered text grids |
+| `GameEvent.java`, `GameListener.java` | Event system (ship moved, ship or Klingon destroyed, …) |
+| `Vector.java` | General vector maths |
+
+## Acknowledgements
+
+This is a Java remake of *Super Star Trek* by Bob Leedom (1974), which was based on Mike Mayfield's original *Star Trek* (1971). It was popularised by David Ahl's *BASIC Computer Games*. Star Trek is a trademark of its respective owners, and this is a non-commercial fan project.
+
+## Author
+
+Mario
