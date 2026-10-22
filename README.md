@@ -1,3 +1,5 @@
+![Banner image](banner.jpeg)
+
 # Super Star Trek (Java)
 
 A text-based remake in Java of the classic 1970s *Super Star Trek* computer game. You command the starship Enterprise, and your mission is to hunt down and destroy the Klingon fleet before it reaches Federation Headquarters.
