@@ -179,4 +179,4 @@ This is a Java remake of *Super Star Trek* by Bob Leedom (1974), which was based
 
 ## Author
 
-Mario
+Mario Gianota (c) 2026 All rights Reserved
